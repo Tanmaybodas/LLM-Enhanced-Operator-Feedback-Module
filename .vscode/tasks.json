@@ -1,0 +1,16 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "Run IoT anomaly guidance (rules backend)",
+			"type": "shell",
+			"command": "c:/Users/tanma/OneDrive/Desktop/IOTSA/.venv/Scripts/python.exe",
+			"args": [
+				"src/iot_anomaly_guidance.py",
+				"--backend",
+				"rules"
+			],
+			"isBackground": false
+		}
+	]
+}
