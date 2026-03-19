@@ -1,67 +1,48 @@
-# LLM-Enhanced Operator Feedback for Real-Time IoT Anomaly Guidance
+# LLM-Enhanced Operator Feedback Module
 
-This project demonstrates an Industry 5.0 workflow where synthetic IoT sensor logs are fused with operator comments and an LLM confidence signal to improve anomaly detection quality.
+Real-time IoT anomaly guidance demo for Industry 5.0 using synthetic machine logs + operator text feedback + LLM-assisted fusion.
 
-## Overview
+## Why this project
 
-The script in [src/iot_anomaly_guidance.py](src/iot_anomaly_guidance.py) does the following:
+Traditional anomaly detection can miss context. This project adds operator comments (for example, “machine feels hot”) and fuses them with sensor analytics to improve detection quality.
 
-1. Simulates 200 machine records with:
-   - IoT signals: `temperature_c`, `vibration_g`, `pressure_bar`, `rpm`
-   - Operator comments such as “machine feels hot” and “vibration weird”
-   - Ground-truth anomaly label
-2. Computes a baseline anomaly score from sensor z-scores only.
-3. Builds a prompt (role + few-shot examples + forced JSON schema).
-4. Gets LLM output with:
-   - `root_cause`
-   - `action`
-   - `confidence` (0–100)
-5. Builds a cleaner hybrid detector with:
-   - Sensor anomaly score (`z_score_anomaly`)
-   - LLM confidence (`llm_confidence`)
-   - Comment risk prior (`comment_risk`)
-   - Logistic fusion model trained on a train split and evaluated on a test split
+## Highlights
 
-6. Evaluates baseline vs fused model with accuracy, precision, recall, F1, and confusion counts.
-7. Saves CSV output and a comparison plot.
+| Capability                   | What it does                                                   |
+| ---------------------------- | -------------------------------------------------------------- |
+| Synthetic simulation         | Generates 200 realistic IoT + operator feedback records        |
+| Prompt-engineered LLM signal | Produces structured JSON: `root_cause`, `action`, `confidence` |
+| Hybrid decision model        | Combines sensor score + LLM confidence + comment risk prior    |
+| Better results               | Improves accuracy / precision / F1 vs IoT-only baseline        |
+| Presentation-ready outputs   | Clean terminal summary + CSVs + JSON report + plot             |
 
-## Project Structure
-
-- [src/iot_anomaly_guidance.py](src/iot_anomaly_guidance.py): main simulation and evaluation pipeline
-- [requirements.txt](requirements.txt): core Python dependencies
-- [results/simulation_output.csv](results/simulation_output.csv): generated record-level outputs
-- [results/accuracy_f1_comparison.png](results/accuracy_f1_comparison.png): metrics visualization
-
-## Prerequisites
-
-- Python 3.10+ (tested with 3.13)
-- Virtual environment recommended
-
-Optional model runtimes:
-
-- Ollama for local `phi3:mini`
-- Hugging Face backend (`transformers` + `torch`)
-
-## Installation
-
-### 1) Create and activate environment
-
-Windows (PowerShell):
+## Quick Start (Windows PowerShell)
 
 ```powershell
 python -m venv .venv
 .\.venv\Scripts\Activate.ps1
-```
-
-### 2) Install core dependencies
-
-```bash
 pip install -r requirements.txt
+python src/iot_anomaly_guidance.py --backend rules --samples 200 --seed 42 --preview-rows 6
 ```
 
-### 3) Optional backends
+## Run Modes
 
-Ollama (recommended local LLM):
+| Mode         | Command                                               | Notes                                                |
+| ------------ | ----------------------------------------------------- | ---------------------------------------------------- |
+| Auto         | `python src/iot_anomaly_guidance.py`                  | Tries Ollama, then Hugging Face, then rules fallback |
+| Rules        | `python src/iot_anomaly_guidance.py --backend rules`  | Fastest and dependency-light                         |
+| Ollama       | `python src/iot_anomaly_guidance.py --backend ollama` | Requires local model runtime                         |
+| Hugging Face | `python src/iot_anomaly_guidance.py --backend hf`     | Requires `transformers` + `torch`                    |
+
+Optional flags:
+
+- `--samples` (default: `200`)
+- `--seed` (default: `42`)
+- `--preview-rows` (default: `8`)
+
+## Optional LLM Setup
+
+Ollama (recommended):
 
 ```bash
 ollama pull phi3:mini
@@ -73,89 +54,53 @@ Hugging Face fallback:
 pip install transformers torch
 ```
 
-## How to Run
+## How it works
 
-From project root, run one of the following:
+Pipeline in [src/iot_anomaly_guidance.py](src/iot_anomaly_guidance.py):
 
-Default mode (tries Ollama, then Hugging Face, else rules fallback):
+1. Generate synthetic IoT records with fields:
+   - `temperature_c`, `vibration_g`, `pressure_bar`, `rpm`
+   - `operator_comment`
+   - `is_anomaly` (ground truth)
+2. Build IoT-only baseline via normalized z-score anomaly signal.
+3. Generate LLM output (or rules fallback):
+   - root cause
+   - recommended action
+   - confidence score (0–100)
+4. Build fused feature set:
+   - sensor anomaly score
+   - LLM confidence
+   - comment risk prior
+5. Train fusion classifier (`LogisticRegression`) and evaluate on held-out test split.
+6. Tune thresholds for better precision/accuracy tradeoff.
+7. Print clean summary and save artifacts.
 
-```bash
-python src/iot_anomaly_guidance.py
-```
+## Output files
 
-Force rules backend (fastest, no LLM runtime needed):
+- Full prediction output: [results/simulation_output.csv](results/simulation_output.csv)
+- Compact preview: [results/simulation_preview_compact.csv](results/simulation_preview_compact.csv)
+- Metrics table: [results/metrics_summary.csv](results/metrics_summary.csv)
+- Structured run report: [results/run_report.json](results/run_report.json)
+- Visual comparison chart: [results/accuracy_f1_comparison.png](results/accuracy_f1_comparison.png)
 
-```bash
-python src/iot_anomaly_guidance.py --backend rules
-```
+## Typical result (rules backend, `seed=42`)
 
-Force Ollama backend:
+| Metric    | IoT Only | IoT + LLM Fusion |
+| --------- | -------: | ---------------: |
+| Accuracy  |   0.8167 |           0.9333 |
+| Precision |   0.7647 |           1.0000 |
+| F1        |   0.7027 |           0.8889 |
 
-```bash
-python src/iot_anomaly_guidance.py --backend ollama
-```
+Results may vary with backend, sample size, and seed.
 
-Force Hugging Face backend:
+## 2-minute teacher demo flow
 
-```bash
-python src/iot_anomaly_guidance.py --backend hf
-```
-
-If using this workspace virtual environment directly on Windows:
-
-```powershell
-c:/Users/tanma/OneDrive/Desktop/IOTSA/.venv/Scripts/python.exe src/iot_anomaly_guidance.py --backend rules
-```
-
-Reproducible teacher-demo run (recommended):
-
-```powershell
-c:/Users/tanma/OneDrive/Desktop/IOTSA/.venv/Scripts/python.exe src/iot_anomaly_guidance.py --backend rules --samples 200 --seed 42 --preview-rows 6
-```
-
-Optional CLI flags:
-
-- `--samples`: number of synthetic records (default `200`)
-- `--seed`: random seed for reproducible metrics (default `42`)
-- `--preview-rows`: number of top simulation rows shown in console (default `8`)
-
-## How It Works Internally
-
-- Synthetic anomaly generation injects realistic deviations by comment context (heat, vibration, pressure, etc.).
-- Prompt engineering enforces structured LLM output for robust parsing.
-- A tiny built-in knowledge dictionary (`COMMON_FAULTS`) injects domain hints into the prompt.
-- Fusion adds human-context awareness that baseline sensor scoring can miss.
-
-## Outputs
-
-After each run:
-
-- Console prints:
-  - baseline vs fused metrics
-  - selected thresholds
-  - confusion matrix counts
-  - compact top-risk simulation preview
-- Full test predictions: [results/simulation_output.csv](results/simulation_output.csv)
-- Compact preview CSV: [results/simulation_preview_compact.csv](results/simulation_preview_compact.csv)
-- Metrics summary CSV: [results/metrics_summary.csv](results/metrics_summary.csv)
-- Structured report JSON: [results/run_report.json](results/run_report.json)
-- Metrics plot: [results/accuracy_f1_comparison.png](results/accuracy_f1_comparison.png)
-
-## Typical Result (rules backend, seed=42)
-
-- Baseline accuracy: `0.8167`
-- Fused accuracy: `0.9333`
-- Baseline precision: `0.7647`
-- Fused precision: `1.0000`
-- Baseline F1: `0.7027`
-- Fused F1: `0.8889`
-
-Exact values vary with random seed and backend.
-
-## Demo Flow for Teacher (2–3 minutes)
-
-1. Run the reproducible command above.
-2. Show the console section "Performance" and "Improvement (absolute)".
-3. Open [results/accuracy_f1_comparison.png](results/accuracy_f1_comparison.png) to visualize gain.
-4. Open [results/simulation_preview_compact.csv](results/simulation_preview_compact.csv) to show clear simulated cases.
-5. If asked for details, open [results/run_report.json](results/run_report.json).
+1. Run:
+   - `python src/iot_anomaly_guidance.py --backend rules --samples 200 --seed 42 --preview-rows 6`
+2. Show the terminal sections:
+   - performance table
+   - confusion counts
+   - improvement summary
+3. Open the chart: [results/accuracy_f1_comparison.png](results/accuracy_f1_comparison.png)
+4. Open the compact examples: [results/simulation_preview_compact.csv](results/simulation_preview_compact.csv)
+5. Open technical details (if asked): [results/run_report.json](results/run_report.json)
