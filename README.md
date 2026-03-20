@@ -78,8 +78,7 @@ Pipeline in [src/iot_anomaly_guidance.py](src/iot_anomaly_guidance.py):
 ## Output files
 
 - Full prediction output: [results/simulation_output.csv](results/simulation_output.csv)
-- Compact preview: [results/simulation_preview_compact.csv](results/simulation_preview_compact.csv)
-- Metrics table: [results/metrics_summary.csv](results/metrics_summary.csv)
+- Metrics table: [results/ablation_metrics.csv](results/ablation_metrics.csv)
 - Structured run report: [results/run_report.json](results/run_report.json)
 - Visual comparison chart: [results/accuracy_f1_comparison.png](results/accuracy_f1_comparison.png)
 
@@ -102,5 +101,5 @@ Results may vary with backend, sample size, and seed.
    - confusion counts
    - improvement summary
 3. Open the chart: [results/accuracy_f1_comparison.png](results/accuracy_f1_comparison.png)
-4. Open the compact examples: [results/simulation_preview_compact.csv](results/simulation_preview_compact.csv)
+4. Open prediction examples: [results/simulation_output.csv](results/simulation_output.csv)
 5. Open technical details (if asked): [results/run_report.json](results/run_report.json)
