@@ -493,28 +493,52 @@ def confusion_breakdown(y_true: np.ndarray, y_pred: np.ndarray) -> Dict[str, int
     return {"tp": int(tp), "tn": int(tn), "fp": int(fp), "fn": int(fn)}
 
 
-def plot_results(metrics_baseline: Dict[str, float], metrics_fused: Dict[str, float], out_path: str) -> None:
+def plot_results(
+    metrics_baseline: Dict[str, float],
+    metrics_llm_only: Dict[str, float],
+    metrics_fused: Dict[str, float],
+    metrics_acceptance: Dict[str, float],
+    out_path: str,
+) -> None:
     labels = ["accuracy", "precision", "recall", "f1"]
     baseline_vals = [metrics_baseline[k] for k in labels]
+    llm_only_vals = [metrics_llm_only[k] for k in labels]
     fused_vals = [metrics_fused[k] for k in labels]
+    acceptance_vals = [metrics_acceptance[k] for k in labels]
 
     x = np.arange(len(labels))
-    width = 0.35
+    width = 0.2
 
     fig, ax = plt.subplots(figsize=(10, 5))
     baseline_bars = ax.bar(
-        x - width / 2,
+        x - 1.5 * width,
         baseline_vals,
         width,
         label="IoT Only",
         edgecolor="black",
         linewidth=0.8,
     )
+    llm_only_bars = ax.bar(
+        x - 0.5 * width,
+        llm_only_vals,
+        width,
+        label="LLM Only",
+        edgecolor="black",
+        linewidth=0.8,
+    )
     fused_bars = ax.bar(
-        x + width / 2,
+        x + 0.5 * width,
         fused_vals,
         width,
         label="IoT + LLM Feedback",
+        edgecolor="black",
+        linewidth=0.8,
+    )
+    acceptance_bars = ax.bar(
+        x + 1.5 * width,
+        acceptance_vals,
+        width,
+        label="IoT + LLM + Acceptance",
         edgecolor="black",
         linewidth=0.8,
     )
@@ -526,7 +550,7 @@ def plot_results(metrics_baseline: Dict[str, float], metrics_fused: Dict[str, fl
     ax.legend()
 
     # Keep zero-height metrics readable by labeling each bar directly.
-    for bar in list(baseline_bars) + list(fused_bars):
+    for bar in list(baseline_bars) + list(llm_only_bars) + list(fused_bars) + list(acceptance_bars):
         h = float(bar.get_height())
         ax.text(
             bar.get_x() + bar.get_width() / 2,
@@ -904,7 +928,13 @@ def run_pipeline(
         with open(run_report_path, "w", encoding="utf-8") as f:
             json.dump(report, f, indent=2)
 
-        plot_results(metrics_baseline, metrics_fused, accuracy_plot_path)
+        plot_results(
+            metrics_baseline,
+            metrics_llm_only,
+            metrics_fused,
+            metrics_acceptance,
+            accuracy_plot_path,
+        )
         plot_fused_confusion_matrix(
             y_test,
             fused_pred,
