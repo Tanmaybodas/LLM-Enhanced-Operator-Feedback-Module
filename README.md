@@ -78,7 +78,7 @@ Pipeline in [src/iot_anomaly_guidance.py](src/iot_anomaly_guidance.py):
 - Backend benchmark comparison: [results/backend_comparison_synthetic.csv](results/backend_comparison_synthetic.csv)
 - Backend performance chart: [results/backend_comparison_synthetic.png](results/backend_comparison_synthetic.png)
 
-## Typical result (rules backend, `seed=42`)
+## Representative result (rules backend, seed=42)
 
 | Metric    | IoT Only | IoT + LLM Fusion |
 | --------- | -------: | ---------------: |
@@ -88,16 +88,42 @@ Pipeline in [src/iot_anomaly_guidance.py](src/iot_anomaly_guidance.py):
 
 Results may vary with backend, sample size, and seed.
 
+## Result Stability and Reproducibility
+
+This project combines ML train/test splitting with LLM-generated signals, so metrics will change across runs.
+
+- README tables are representative snapshots from a fixed, reproducible setup (for example: seed=42).
+- Latest run-specific values should be read from results/metrics.csv and results/run_report.json.
+- For stronger reporting, use multi-seed averages (mean +/- std) instead of a single run.
+
+Recommended reporting protocol:
+
+1. Keep one fixed seed snapshot in this README (seed=42).
+2. Run at least 5 seeds for each backend/data-source pair.
+3. Report mean +/- std for accuracy, precision, recall, and F1.
+
+Example multi-seed commands (PowerShell):
+
+```powershell
+foreach ($s in 40..44) {
+   & .\.venv\Scripts\python.exe src\iot_anomaly_guidance.py --backend rules --samples 300 --seed $s --data-source public --preview-rows 0
+}
+
+foreach ($s in 40..44) {
+   & .\.venv\Scripts\python.exe src\iot_anomaly_guidance.py --backend ollama --samples 300 --seed $s --data-source public --preview-rows 0
+}
+```
+
 ## Real LLM Results: Ollama (phi3:mini) vs Rules
 
-To validate real LLM execution, we benchmark **Ollama (local LLM)** against the **rules baseline**. Both run with identical data (`seed=42`, 200 samples):
+To validate real LLM execution, we benchmark Ollama (local LLM) against the rules baseline. The table below is a representative fixed-seed run (seed=42, 200 samples):
 
 ```bash
 ollama pull phi3:mini
 python src/iot_anomaly_guidance.py --backend ollama --samples 200 --seed 42 --preview-rows 6
 ```
 
-### Backend Comparison (Fused Model)
+### Backend Comparison (Fused Model, representative run)
 
 | Backend | Accuracy | Precision | Recall | F1      | LLM Source |
 | ------- | -------: | --------: | -----: | ------: | ---------- |
@@ -157,11 +183,11 @@ The AI4I dataset (air temp, process temp, torque, rpm, failure flags) is mapped 
 - **Operator comments** ← anomaly-aware synthesis (e.g., "machine feels hot" for thermal failures, "vibration weird" for rotational faults)
 - **Ground truth** ← AI4I "Machine failure" label
 
-### Expected Results
-Preliminary evaluation on public data shows:
-- Consistent F1 improvement (8–15% over IoT-only) across backends
-- Ollama generates fault-specific corrective actions (vs rules' generic patterns)
-- Operator comment synthesis preserves semantic alignment with actual fault modes
+### Expected behavior
+Public-data metrics vary by seed and class balance in the selected sample.
+- Fused models typically improve precision/F1 over IoT-only baselines.
+- Recall may remain volatile on small anomaly counts.
+- Ollama usually provides more natural corrective text than rules-only outputs.
 
 **Note:** Download may be restricted by network environment. For offline evaluation, download [AI4I 2020](https://archive.ics.uci.edu/ml/machine-learning-databases/00601/) and pass `--public-csv`.
 
