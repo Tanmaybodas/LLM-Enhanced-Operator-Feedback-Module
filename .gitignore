@@ -17,8 +17,5 @@ venv/
 .DS_Store
 Thumbs.db
 
-# Runtime artifacts
-results/
-
 # Local environment/config
 .env

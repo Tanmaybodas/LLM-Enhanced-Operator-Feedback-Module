@@ -1,0 +1,3 @@
+backend,data_source,fused_accuracy,fused_precision,fused_recall,fused_f1,llm_only_accuracy,llm_only_f1,llm_source_counts_test,run_report
+ollama,synthetic,0.9583333333333334,0.875,1.0,0.9333333333333333,0.6666666666666666,0.6,"{""ollama"": 24}",
+rules,synthetic,0.9583333333333334,1.0,0.8571428571428571,0.9230769230769231,0.9583333333333334,0.9230769230769231,"{""rules"": 24}",

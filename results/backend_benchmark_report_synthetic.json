@@ -1,0 +1,40 @@
+{
+  "data_source": "synthetic",
+  "seed": 42,
+  "samples": 80,
+  "backends": [
+    "rules",
+    "ollama"
+  ],
+  "results_mode": "compact",
+  "rows": [
+    {
+      "backend": "rules",
+      "data_source": "synthetic",
+      "fused_accuracy": 0.9583333333333334,
+      "fused_precision": 1.0,
+      "fused_recall": 0.8571428571428571,
+      "fused_f1": 0.9230769230769231,
+      "llm_only_accuracy": 0.9583333333333334,
+      "llm_only_f1": 0.9230769230769231,
+      "llm_source_counts_test": "{\"rules\": 24}",
+      "run_report": ""
+    },
+    {
+      "backend": "ollama",
+      "data_source": "synthetic",
+      "fused_accuracy": 0.9583333333333334,
+      "fused_precision": 0.875,
+      "fused_recall": 1.0,
+      "fused_f1": 0.9333333333333333,
+      "llm_only_accuracy": 0.6666666666666666,
+      "llm_only_f1": 0.6,
+      "llm_source_counts_test": "{\"ollama\": 24}",
+      "run_report": ""
+    }
+  ],
+  "saved_files": {
+    "comparison_csv": "results/backend_comparison_synthetic.csv",
+    "comparison_plot": "results/backend_comparison_synthetic.png"
+  }
+}
