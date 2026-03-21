@@ -61,6 +61,11 @@ LOW_RISK_COMMENTS = {
     "strange noise from motor",
 }
 
+AI4I_PUBLIC_URLS = [
+    "https://archive.ics.uci.edu/ml/machine-learning-databases/00601/ai4i2020.csv",
+    "https://archive.ics.uci.edu/ml/machine-learning-databases/00601/AI4I%202020%20Predictive%20Maintenance%20Dataset.csv",
+]
+
 
 PROMPT_TEMPLATE = """You are an expert Industry 5.0 maintenance engineer. Think step-by-step.
 
@@ -153,6 +158,98 @@ def generate_synthetic_data(n: int = 200) -> pd.DataFrame:
         )
 
     return pd.DataFrame(rows)
+
+
+def _select_comment_for_ai4i_row(row: pd.Series, rng: np.random.Generator) -> str:
+    if int(row.get("TWF", 0)) == 1:
+        return str(rng.choice(["machine feels hot", "temperature rising fast", "burning smell near panel"]))
+    if int(row.get("HDF", 0)) == 1:
+        return str(rng.choice(["machine feels hot", "output quality fluctuating", "temperature rising fast"]))
+    if int(row.get("PWF", 0)) == 1:
+        return str(rng.choice(["pressure seems low", "rpm unstable", "output quality fluctuating"]))
+    if int(row.get("OSF", 0)) == 1:
+        return str(rng.choice(["strange noise from motor", "vibration weird", "intermittent shaking"]))
+    if int(row.get("RNF", 0)) == 1:
+        return str(rng.choice(["vibration weird", "intermittent shaking", "machine sounds rough"]))
+    return str(rng.choice(["machine sounds rough", "rpm unstable", "output quality fluctuating", "strange noise from motor"]))
+
+
+def _load_ai4i_public_csv(path_or_url: Optional[str]) -> pd.DataFrame:
+    if path_or_url:
+        return pd.read_csv(path_or_url)
+
+    last_error: Optional[Exception] = None
+    for url in AI4I_PUBLIC_URLS:
+        try:
+            return pd.read_csv(url)
+        except Exception as exc:
+            last_error = exc
+
+    raise RuntimeError(
+        "Could not load AI4I public dataset. Provide --public-csv with a local CSV path."
+    ) from last_error
+
+
+def generate_public_ai4i_data(n: int, seed: int, public_csv: Optional[str]) -> pd.DataFrame:
+    raw = _load_ai4i_public_csv(public_csv)
+    required_cols = {
+        "Air temperature [K]",
+        "Process temperature [K]",
+        "Rotational speed [rpm]",
+        "Torque [Nm]",
+        "Machine failure",
+    }
+    missing = [c for c in required_cols if c not in raw.columns]
+    if missing:
+        raise RuntimeError(
+            f"Public dataset missing required columns: {missing}. Expected AI4I 2020 format."
+        )
+
+    df = raw.copy()
+    if n > 0 and n < len(df):
+        df = df.sample(n=n, random_state=seed)
+    df = df.reset_index(drop=True)
+
+    # AI4I lacks direct vibration/pressure sensors in this schema; these proxies
+    # preserve relative signal while keeping feature ranges realistic.
+    torque = df["Torque [Nm]"].astype(float)
+    torque_min = float(torque.min())
+    torque_max = float(torque.max())
+    torque_norm = (torque - torque_min) / (torque_max - torque_min + 1e-9)
+
+    temp_air_c = df["Air temperature [K]"].astype(float) - 273.15
+    temp_proc_c = df["Process temperature [K]"].astype(float) - 273.15
+    rpm = df["Rotational speed [rpm]"].astype(float)
+
+    vibration_g = 0.6 + 2.9 * torque_norm
+    pressure_bar = 2.4 - ((temp_proc_c - temp_air_c) * 0.12) + (torque_norm * 0.18)
+    pressure_bar = pressure_bar.clip(lower=0.5, upper=3.5)
+
+    rng = np.random.default_rng(seed)
+    comments = df.apply(lambda r: _select_comment_for_ai4i_row(r, rng), axis=1)
+
+    out = pd.DataFrame(
+        {
+            "temperature_c": temp_proc_c.round(2),
+            "vibration_g": vibration_g.round(2),
+            "pressure_bar": pressure_bar.round(2),
+            "rpm": rpm.round(2),
+            "operator_comment": comments,
+            "is_anomaly": df["Machine failure"].astype(int),
+        }
+    )
+    return out
+
+
+def build_input_data(
+    data_source: str,
+    n_samples: int,
+    seed: int,
+    public_csv: Optional[str],
+) -> pd.DataFrame:
+    if data_source == "public":
+        return generate_public_ai4i_data(n=n_samples, seed=seed, public_csv=public_csv)
+    return generate_synthetic_data(n=n_samples)
 
 
 def classify_anomaly_type(comment: str) -> str:
@@ -499,9 +596,19 @@ def run_pipeline(
     seed: int = 42,
     preview_rows: int = 8,
     require_real_llm: bool = False,
-) -> None:
+    data_source: str = "synthetic",
+    public_csv: Optional[str] = None,
+    output_tag: Optional[str] = None,
+    results_mode: str = "compact",
+    save_artifacts: bool = True,
+) -> Dict[str, Any]:
     seed_everything(seed)
-    df = generate_synthetic_data(n=n_samples)
+    df = build_input_data(
+        data_source=data_source,
+        n_samples=n_samples,
+        seed=seed,
+        public_csv=public_csv,
+    )
 
     z_score_anomaly = compute_zscore_anomaly(df)
 
@@ -606,7 +713,7 @@ def run_pipeline(
     print("\n" + "=" * 72)
     print(" IoT ANOMALY GUIDANCE - RUN SUMMARY ")
     print("=" * 72)
-    print(f"Backend: {backend} | Samples: {n_samples} | Seed: {seed}")
+    print(f"Backend: {backend} | Samples: {n_samples} | Seed: {seed} | Data: {data_source}")
 
     perf = pd.DataFrame(
         [metrics_baseline, metrics_llm_only, metrics_fused, metrics_acceptance],
@@ -687,8 +794,22 @@ def run_pipeline(
         print(f"   what_to_do: {row['action']}")
         print("-" * 72)
 
-    os.makedirs("results", exist_ok=True)
-    test_view.to_csv("results/simulation_output.csv", index=False)
+    if save_artifacts:
+        os.makedirs("results", exist_ok=True)
+    tag = f"_{output_tag}" if output_tag else ""
+    simulation_output_path = f"results/simulation_output{tag}.csv"
+    preview_output_path = f"results/preview_rows{tag}.csv"
+    metrics_path = f"results/metrics{tag}.csv"
+    run_report_path = f"results/run_report{tag}.json"
+    accuracy_plot_path = f"results/accuracy_f1_comparison{tag}.png"
+    confusion_plot_path = f"results/confusion_matrices{tag}.png"
+    pr_plot_path = f"results/precision_recall_curve{tag}.png"
+    anomaly_breakdown_path = f"results/per_anomaly_type_breakdown{tag}.csv"
+    ablation_metrics_path = f"results/ablation_metrics{tag}.csv"
+
+    if save_artifacts and results_mode == "full":
+        test_view.to_csv(simulation_output_path, index=False)
+        compact_preview.head(max(20, preview_rows)).to_csv(preview_output_path, index=False)
 
     report = {
         "backend": backend,
@@ -720,28 +841,32 @@ def run_pipeline(
             "eligible_count": int((test_view["llm_confidence"] > 75).sum()),
         },
     }
-    with open("results/run_report.json", "w", encoding="utf-8") as f:
-        json.dump(report, f, indent=2)
+    report["data_source"] = data_source
+    report["output_tag"] = output_tag or ""
+    if save_artifacts:
+        with open(run_report_path, "w", encoding="utf-8") as f:
+            json.dump(report, f, indent=2)
 
-    plot_results(metrics_baseline, metrics_fused, "results/accuracy_f1_comparison.png")
-    plot_confusion_matrices(
-        y_test,
-        {
-            "IoT Only": baseline_pred,
-            "LLM Only": llm_only_pred,
-            "IoT + LLM": fused_pred,
-        },
-        "results/confusion_matrices.png",
-    )
-    ap_scores = plot_precision_recall_curves(
-        y_test,
-        {
-            "IoT Only": baseline_test_scores,
-            "LLM Only": llm_test_scores,
-            "IoT + LLM": fused_test_scores,
-        },
-        "results/precision_recall_curve.png",
-    )
+        plot_results(metrics_baseline, metrics_fused, accuracy_plot_path)
+    if save_artifacts and results_mode == "full":
+        plot_confusion_matrices(
+            y_test,
+            {
+                "IoT Only": baseline_pred,
+                "LLM Only": llm_only_pred,
+                "IoT + LLM": fused_pred,
+            },
+            confusion_plot_path,
+        )
+    score_dict = {
+        "IoT Only": baseline_test_scores,
+        "LLM Only": llm_test_scores,
+        "IoT + LLM": fused_test_scores,
+    }
+    if save_artifacts and results_mode == "full":
+        ap_scores = plot_precision_recall_curves(y_test, score_dict, pr_plot_path)
+    else:
+        ap_scores = {name: float(average_precision_score(y_test, scores)) for name, scores in score_dict.items()}
 
     type_summary_rows = []
     for t in sorted(test_view["anomaly_type"].unique()):
@@ -757,7 +882,8 @@ def run_pipeline(
                 "f1": m["f1"],
             }
         )
-    pd.DataFrame(type_summary_rows).to_csv("results/per_anomaly_type_breakdown.csv", index=False)
+    if save_artifacts and results_mode == "full":
+        pd.DataFrame(type_summary_rows).to_csv(anomaly_breakdown_path, index=False)
 
     metrics_wide = pd.DataFrame(
         [
@@ -775,17 +901,115 @@ def run_pipeline(
             "IoT + LLM + Acceptance": np.nan,
         }
     )
-    metrics_wide.to_csv("results/ablation_metrics.csv", index=False)
+    if save_artifacts:
+        metrics_wide.to_csv(metrics_path, index=False)
+    if save_artifacts and results_mode == "full":
+        metrics_wide.to_csv(ablation_metrics_path, index=False)
 
-    print("\n[5] Saved files")
-    print("- results/simulation_output.csv")
-    print("- results/ablation_metrics.csv")
-    print("- results/per_anomaly_type_breakdown.csv")
-    print("- results/run_report.json")
-    print("- results/accuracy_f1_comparison.png")
-    print("- results/confusion_matrices.png")
-    print("- results/precision_recall_curve.png")
     print("=" * 72)
+
+    report["saved_files"] = {}
+    if save_artifacts:
+        report["saved_files"] = {
+            "metrics": metrics_path,
+            "run_report": run_report_path,
+            "accuracy_plot": accuracy_plot_path,
+        }
+    if save_artifacts and results_mode == "full":
+        report["saved_files"]["simulation_output"] = simulation_output_path
+        report["saved_files"]["preview_rows"] = preview_output_path
+        report["saved_files"]["ablation_metrics"] = ablation_metrics_path
+        report["saved_files"]["per_anomaly_type_breakdown"] = anomaly_breakdown_path
+        report["saved_files"]["confusion_plot"] = confusion_plot_path
+        report["saved_files"]["pr_plot"] = pr_plot_path
+    return report
+
+
+def run_backend_benchmark(
+    backends: List[str],
+    n_samples: int,
+    seed: int,
+    preview_rows: int,
+    require_real_llm: bool,
+    data_source: str,
+    public_csv: Optional[str],
+    results_mode: str,
+) -> None:
+    rows: List[Dict[str, Any]] = []
+    save_per_backend_artifacts = results_mode == "full"
+    for backend in backends:
+        tag = f"{data_source}_{backend}"
+        report = run_pipeline(
+            backend=backend,
+            n_samples=n_samples,
+            seed=seed,
+            preview_rows=preview_rows,
+            require_real_llm=require_real_llm,
+            data_source=data_source,
+            public_csv=public_csv,
+            output_tag=tag,
+            results_mode=results_mode,
+            save_artifacts=save_per_backend_artifacts,
+        )
+        rows.append(
+            {
+                "backend": backend,
+                "data_source": data_source,
+                "fused_accuracy": report["metrics"]["fused"]["accuracy"],
+                "fused_precision": report["metrics"]["fused"]["precision"],
+                "fused_recall": report["metrics"]["fused"]["recall"],
+                "fused_f1": report["metrics"]["fused"]["f1"],
+                "llm_only_accuracy": report["metrics"]["llm_only"]["accuracy"],
+                "llm_only_f1": report["metrics"]["llm_only"]["f1"],
+                "llm_source_counts_test": json.dumps(report.get("llm_source_counts_test", {})),
+                "run_report": report.get("saved_files", {}).get("run_report", ""),
+            }
+        )
+
+    comp = pd.DataFrame(rows).sort_values(by="fused_f1", ascending=False)
+    os.makedirs("results", exist_ok=True)
+    comp_path = f"results/backend_comparison_{data_source}.csv"
+    comp.to_csv(comp_path, index=False)
+
+    metrics_for_plot = ["fused_accuracy", "fused_precision", "fused_recall", "fused_f1"]
+    x = np.arange(len(metrics_for_plot))
+    width = 0.8 / max(1, len(comp))
+
+    plt.figure(figsize=(11, 5))
+    for i, (_, row) in enumerate(comp.iterrows()):
+        vals = [float(row[m]) for m in metrics_for_plot]
+        plt.bar(x + (i - (len(comp) - 1) / 2) * width, vals, width=width, label=str(row["backend"]))
+    plt.xticks(x, [m.replace("fused_", "").upper() for m in metrics_for_plot])
+    plt.ylim(0, 1)
+    plt.ylabel("Score")
+    plt.title(f"Backend Comparison ({data_source})")
+    plt.legend(title="Backend")
+    plt.tight_layout()
+    comp_plot_path = f"results/backend_comparison_{data_source}.png"
+    plt.savefig(comp_plot_path, dpi=140)
+    plt.close()
+
+    benchmark_report = {
+        "data_source": data_source,
+        "seed": seed,
+        "samples": n_samples,
+        "backends": backends,
+        "results_mode": results_mode,
+        "rows": rows,
+        "saved_files": {
+            "comparison_csv": comp_path,
+            "comparison_plot": comp_plot_path,
+        },
+    }
+    benchmark_report_path = f"results/backend_benchmark_report_{data_source}.json"
+    with open(benchmark_report_path, "w", encoding="utf-8") as f:
+        json.dump(benchmark_report, f, indent=2)
+
+    print("\n[6] Backend Benchmark Summary")
+    print(comp[["backend", "fused_accuracy", "fused_precision", "fused_recall", "fused_f1"]].to_string(index=False, float_format=lambda x: f"{x:0.4f}"))
+    print(f"- {comp_path}")
+    print(f"- {comp_plot_path}")
+    print(f"- {benchmark_report_path}")
 
 
 def parse_args() -> argparse.Namespace:
@@ -809,15 +1033,53 @@ def parse_args() -> argparse.Namespace:
         action="store_true",
         help="Fail run if selected real backend (ollama/hf) is unavailable and fallback would occur.",
     )
+    parser.add_argument(
+        "--data-source",
+        default="synthetic",
+        choices=["synthetic", "public"],
+        help="Input data source: synthetic or public AI4I dataset.",
+    )
+    parser.add_argument(
+        "--public-csv",
+        default=None,
+        help="Optional local path/URL to AI4I public dataset CSV.",
+    )
+    parser.add_argument(
+        "--benchmark-backends",
+        default="",
+        help="Comma-separated backend benchmark list, e.g. rules,ollama or rules,hf,ollama",
+    )
+    parser.add_argument(
+        "--results-mode",
+        default="compact",
+        choices=["compact", "full"],
+        help="compact saves only essential outputs; full saves all diagnostics.",
+    )
     return parser.parse_args()
 
 
 if __name__ == "__main__":
     args = parse_args()
-    run_pipeline(
-        backend=args.backend,
-        n_samples=args.samples,
-        seed=args.seed,
-        preview_rows=args.preview_rows,
-        require_real_llm=args.require_real_llm,
-    )
+    if args.benchmark_backends.strip():
+        backends = [b.strip() for b in args.benchmark_backends.split(",") if b.strip()]
+        run_backend_benchmark(
+            backends=backends,
+            n_samples=args.samples,
+            seed=args.seed,
+            preview_rows=args.preview_rows,
+            require_real_llm=args.require_real_llm,
+            data_source=args.data_source,
+            public_csv=args.public_csv,
+            results_mode=args.results_mode,
+        )
+    else:
+        run_pipeline(
+            backend=args.backend,
+            n_samples=args.samples,
+            seed=args.seed,
+            preview_rows=args.preview_rows,
+            require_real_llm=args.require_real_llm,
+            data_source=args.data_source,
+            public_csv=args.public_csv,
+            results_mode=args.results_mode,
+        )
