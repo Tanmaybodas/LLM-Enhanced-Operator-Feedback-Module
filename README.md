@@ -88,6 +88,53 @@ Pipeline in [src/iot_anomaly_guidance.py](src/iot_anomaly_guidance.py):
 
 Results may vary with backend, sample size, and seed.
 
+## Real LLM Results: Ollama (phi3:mini) vs Rules
+
+To validate real LLM execution, we benchmark **Ollama (local LLM)** against the **rules baseline**. Both run with identical data (`seed=42`, 200 samples):
+
+```bash
+ollama pull phi3:mini
+python src/iot_anomaly_guidance.py --backend ollama --samples 200 --seed 42 --preview-rows 6
+```
+
+### Backend Comparison (Fused Model)
+
+| Backend | Accuracy | Precision | Recall | F1      | LLM Source |
+| ------- | -------: | --------: | -----: | ------: | ---------- |
+| Ollama  |    0.958 |     0.875 |  1.000 | **0.933** | phi3:mini  |
+| Rules   |    0.958 |     1.000 |  0.857 | 0.923   | keyword    |
+
+**Key Observations:**
+- **Identical accuracy** (95.8%) — LLM fusion doesn't degrade performance
+- **Ollama achieves perfect recall** (100%) — catches all anomalies, though with slightly lower precision (87.5% vs 100%)
+- **F1 parity** — Ollama +1% F1 gain despite lower precision, driven by superior recall
+- **Natural language root causes** — Ollama generates context-aware explanations vs keyword-matched rules (e.g., "Bearing wear or shaft imbalance" for vibration + operator comment "intermittent shaking")
+
+### LLM Reasoning Example
+
+**Ollama output (phi3:mini):**
+```json
+{
+  "root_cause": "Bearing wear or shaft imbalance",
+  "action": "Check bearings, alignment, and fasteners",
+  "confidence": 93
+}
+```
+
+**Rules baseline (keyword match):**
+```
+If vibration > threshold → "Bearing wear" 
+If temperature > threshold → "Coolant failure"
+```
+
+### Limitations & Considerations
+- **Small model sensitivity** — phi3:mini occasionally shows prompt/seed sensitivity; larger models (e.g., `ollama run llama2`) may be more stable
+- **JSON forcing** — We enforced structured output to prevent hallucinations (see `call_ollama()` in source)
+- **Synthetic data** — Operator comments are generated; real human feedback would strengthen validation
+
+### Result Artifacts
+See [results/backend_comparison_synthetic.csv](results/backend_comparison_synthetic.csv) and [results/backend_comparison_synthetic.png](results/backend_comparison_synthetic.png) for the full benchmark run.
+
 ## 2-minute teacher demo flow
 
 1. Run:
