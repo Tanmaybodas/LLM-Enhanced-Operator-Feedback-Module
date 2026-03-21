@@ -72,10 +72,11 @@ Pipeline in [src/iot_anomaly_guidance.py](src/iot_anomaly_guidance.py):
 
 ## Output files
 
-- Full prediction output: [results/simulation_output.csv](results/simulation_output.csv)
-- Metrics table: [results/ablation_metrics.csv](results/ablation_metrics.csv)
-- Structured run report: [results/run_report.json](results/run_report.json)
-- Visual comparison chart: [results/accuracy_f1_comparison.png](results/accuracy_f1_comparison.png)
+- Metrics table: [results/metrics.csv](results/metrics.csv)
+- Run report with details: [results/run_report.json](results/run_report.json)
+- Performance comparison chart: [results/accuracy_f1_comparison.png](results/accuracy_f1_comparison.png)
+- Backend benchmark comparison: [results/backend_comparison_synthetic.csv](results/backend_comparison_synthetic.csv)
+- Backend performance chart: [results/backend_comparison_synthetic.png](results/backend_comparison_synthetic.png)
 
 ## Typical result (rules backend, `seed=42`)
 
@@ -93,8 +94,7 @@ Results may vary with backend, sample size, and seed.
    - `python src/iot_anomaly_guidance.py --backend rules --samples 200 --seed 42 --preview-rows 6`
 2. Show the terminal sections:
    - performance table
-   - confusion counts
    - improvement summary
-3. Open the chart: [results/accuracy_f1_comparison.png](results/accuracy_f1_comparison.png)
-4. Open prediction examples: [results/simulation_output.csv](results/simulation_output.csv)
+3. Open the metrics chart: [results/accuracy_f1_comparison.png](results/accuracy_f1_comparison.png)
+4. Open metrics CSV: [results/metrics.csv](results/metrics.csv)
 5. Open technical details (if asked): [results/run_report.json](results/run_report.json)
