@@ -189,7 +189,20 @@ Public-data metrics vary by seed and class balance in the selected sample.
 - Recall may remain volatile on small anomaly counts.
 - Ollama usually provides more natural corrective text than rules-only outputs.
 
+### Public-data confusion matrix (fused model)
+
+![Public data confusion matrix](results/confusion_matrix_public_fused.png)
+
+This image is generated from the latest public-data run report in results/run_report.json.
+
 **Note:** Download may be restricted by network environment. For offline evaluation, download [AI4I 2020](https://archive.ics.uci.edu/ml/machine-learning-databases/00601/) and pass `--public-csv`.
+
+## Known limitations and future work.
+
+- Results are sensitive to random seed and anomaly prevalence; multi-seed mean plus/minus std reporting should be preferred.
+- Public-data anomaly counts can be small in sampled subsets, which can make recall unstable.
+- Small local models can produce occasional JSON/semantic drift; stronger schema validation and retry logic would improve robustness.
+- Next steps: add automated multi-seed aggregation, test on additional public vibration datasets, and calibrate thresholds per data source.
 
 ## 2-minute teacher demo flow
 
