@@ -1101,7 +1101,11 @@ if __name__ == "__main__":
     if args.no_overwrite:
         ts = datetime.now().strftime("%Y%m%d_%H%M%S")
         auto_tag = f"{args.backend}_{args.data_source}_s{args.seed}_{ts}"
-    chosen_tag: Optional[str] = args.output_tag.strip() or auto_tag
+
+    # Default behavior: keep one stable artifact set per backend/data-source pair.
+    # This avoids a single global overwrite while also avoiding too many timestamped files.
+    grouped_default_tag = f"{args.backend}_{args.data_source}"
+    chosen_tag: Optional[str] = args.output_tag.strip() or auto_tag or grouped_default_tag
 
     if args.benchmark_backends.strip():
         backends = [b.strip() for b in args.benchmark_backends.split(",") if b.strip()]
