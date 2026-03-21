@@ -72,9 +72,9 @@ Pipeline in [src/iot_anomaly_guidance.py](src/iot_anomaly_guidance.py):
 
 ## Output files
 
-- Metrics table: [results/metrics.csv](results/metrics.csv)
-- Run report with details: [results/run_report.json](results/run_report.json)
-- Performance comparison chart: [results/accuracy_f1_comparison.png](results/accuracy_f1_comparison.png)
+- Metrics table (rules + public): [results/metrics_rules_public.csv](results/metrics_rules_public.csv)
+- Run report (rules + public): [results/run_report_rules_public.json](results/run_report_rules_public.json)
+- Performance chart (rules + public): [results/accuracy_f1_comparison_rules_public.png](results/accuracy_f1_comparison_rules_public.png)
 - Backend benchmark comparison: [results/backend_comparison_synthetic.csv](results/backend_comparison_synthetic.csv)
 - Backend performance chart: [results/backend_comparison_synthetic.png](results/backend_comparison_synthetic.png)
 
@@ -93,7 +93,7 @@ Results may vary with backend, sample size, and seed.
 This project combines ML train/test splitting with LLM-generated signals, so metrics will change across runs.
 
 - README tables are representative snapshots from a fixed, reproducible setup (for example: seed=42).
-- Latest run-specific values should be read from results/metrics.csv and results/run_report.json.
+- Latest run-specific values should be read from the pair-specific files (for example: results/metrics_rules_public.csv and results/run_report_rules_public.json).
 - For stronger reporting, use multi-seed averages (mean +/- std) instead of a single run.
 
 Recommended reporting protocol:
