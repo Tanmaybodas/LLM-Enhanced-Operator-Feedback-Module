@@ -74,12 +74,20 @@ Pipeline in [src/iot_anomaly_guidance.py](src/iot_anomaly_guidance.py):
 
 - Metrics table (rules + public): [results/metrics_rules_public.csv](results/metrics_rules_public.csv)
 - Metrics table (rules + synthetic): [results/metrics_rules_synthetic.csv](results/metrics_rules_synthetic.csv)
+- Metrics table (ollama + public): [results/metrics_ollama_public.csv](results/metrics_ollama_public.csv)
+- Metrics table (ollama + synthetic): [results/metrics_ollama_synthetic.csv](results/metrics_ollama_synthetic.csv)
 - Run report (rules + public): [results/run_report_rules_public.json](results/run_report_rules_public.json)
 - Run report (rules + synthetic): [results/run_report_rules_synthetic.json](results/run_report_rules_synthetic.json)
+- Run report (ollama + public): [results/run_report_ollama_public.json](results/run_report_ollama_public.json)
+- Run report (ollama + synthetic): [results/run_report_ollama_synthetic.json](results/run_report_ollama_synthetic.json)
 - Performance chart (rules + public): [results/accuracy_f1_comparison_rules_public.png](results/accuracy_f1_comparison_rules_public.png)
 - Performance chart (rules + synthetic): [results/accuracy_f1_comparison_rules_synthetic.png](results/accuracy_f1_comparison_rules_synthetic.png)
+- Performance chart (ollama + public): [results/accuracy_f1_comparison_ollama_public.png](results/accuracy_f1_comparison_ollama_public.png)
+- Performance chart (ollama + synthetic): [results/accuracy_f1_comparison_ollama_synthetic.png](results/accuracy_f1_comparison_ollama_synthetic.png)
 - Fused confusion matrix (rules + public): [results/confusion_matrix_fused_rules_public.png](results/confusion_matrix_fused_rules_public.png)
 - Fused confusion matrix (rules + synthetic): [results/confusion_matrix_fused_rules_synthetic.png](results/confusion_matrix_fused_rules_synthetic.png)
+- Fused confusion matrix (ollama + public): [results/confusion_matrix_fused_ollama_public.png](results/confusion_matrix_fused_ollama_public.png)
+- Fused confusion matrix (ollama + synthetic): [results/confusion_matrix_fused_ollama_synthetic.png](results/confusion_matrix_fused_ollama_synthetic.png)
 - Backend benchmark comparison: [results/backend_comparison_synthetic.csv](results/backend_comparison_synthetic.csv)
 - Backend performance chart: [results/backend_comparison_synthetic.png](results/backend_comparison_synthetic.png)
 
@@ -108,6 +116,30 @@ Chart: [results/accuracy_f1_comparison_rules_synthetic.png](results/accuracy_f1_
 | IoT + LLM + Acceptance   |    0.883 |     0.000 |  0.000 | 0.000 |
 
 Chart: [results/accuracy_f1_comparison_rules_public.png](results/accuracy_f1_comparison_rules_public.png)
+
+## Latest graph data (ollama backend)
+
+### Synthetic (`seed=1`, `samples=200`)
+
+| Model                    | Accuracy | Precision | Recall | F1    |
+| ------------------------ | -------: | --------: | -----: | ----: |
+| IoT Only                 |    0.800 |     0.889 |  0.421 | 0.571 |
+| LLM Only                 |    0.667 |     0.481 |  0.684 | 0.565 |
+| IoT + LLM                |    0.883 |     0.833 |  0.789 | 0.811 |
+| IoT + LLM + Acceptance   |    0.867 |     0.867 |  0.684 | 0.765 |
+
+Chart: [results/accuracy_f1_comparison_ollama_synthetic.png](results/accuracy_f1_comparison_ollama_synthetic.png)
+
+### Public (`seed=1`, `samples=200`)
+
+| Model                    | Accuracy | Precision | Recall | F1    |
+| ------------------------ | -------: | --------: | -----: | ----: |
+| IoT Only                 |    0.850 |     0.100 |  1.000 | 0.182 |
+| LLM Only                 |    0.700 |     0.000 |  0.000 | 0.000 |
+| IoT + LLM                |    0.983 |     0.500 |  1.000 | 0.667 |
+| IoT + LLM + Acceptance   |    0.867 |     0.111 |  1.000 | 0.200 |
+
+Chart: [results/accuracy_f1_comparison_ollama_public.png](results/accuracy_f1_comparison_ollama_public.png)
 
 ## Representative result (rules backend, seed=42)
 
