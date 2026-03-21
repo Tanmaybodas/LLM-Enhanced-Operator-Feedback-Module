@@ -1,4 +1,5 @@
 import argparse
+from datetime import datetime
 import importlib
 import json
 import os
@@ -1081,11 +1082,27 @@ def parse_args() -> argparse.Namespace:
         choices=["compact", "full"],
         help="compact saves only essential outputs; full saves all diagnostics.",
     )
+    parser.add_argument(
+        "--output-tag",
+        default="",
+        help="Optional suffix for result files (for example: run1 or ollama_public_seed42).",
+    )
+    parser.add_argument(
+        "--no-overwrite",
+        action="store_true",
+        help="Auto-generate a unique timestamped output tag to keep history and avoid overwriting result files.",
+    )
     return parser.parse_args()
 
 
 if __name__ == "__main__":
     args = parse_args()
+    auto_tag: Optional[str] = None
+    if args.no_overwrite:
+        ts = datetime.now().strftime("%Y%m%d_%H%M%S")
+        auto_tag = f"{args.backend}_{args.data_source}_s{args.seed}_{ts}"
+    chosen_tag: Optional[str] = args.output_tag.strip() or auto_tag
+
     if args.benchmark_backends.strip():
         backends = [b.strip() for b in args.benchmark_backends.split(",") if b.strip()]
         run_backend_benchmark(
@@ -1107,5 +1124,6 @@ if __name__ == "__main__":
             require_real_llm=args.require_real_llm,
             data_source=args.data_source,
             public_csv=args.public_csv,
+            output_tag=chosen_tag,
             results_mode=args.results_mode,
         )
