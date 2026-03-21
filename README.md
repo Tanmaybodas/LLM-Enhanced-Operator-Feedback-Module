@@ -141,6 +141,8 @@ Chart: [results/accuracy_f1_comparison_ollama_synthetic.png](results/accuracy_f1
 
 Chart: [results/accuracy_f1_comparison_ollama_public.png](results/accuracy_f1_comparison_ollama_public.png)
 
+**Ollama Results Summary:** Ollama yields similar uplift with more natural explanations. On synthetic data, IoT+LLM fusion achieves 0.883 accuracy and 0.789 recall (vs 0.737 for rules backend). On public data (imbalanced, 3% anomalies), Ollama shows superior recall (1.0 across models), catching all true positives—critical for safety-sensitive anomaly detection.
+
 ## Representative result (rules backend, seed=42)
 
 | Metric    | IoT Only | IoT + LLM Fusion |
