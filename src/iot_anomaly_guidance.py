@@ -570,6 +570,36 @@ def plot_confusion_matrices(y_true: np.ndarray, preds: Dict[str, np.ndarray], ou
     plt.close(fig)
 
 
+def plot_fused_confusion_matrix(
+    y_true: np.ndarray,
+    y_pred: np.ndarray,
+    out_path: str,
+    backend: str,
+    data_source: str,
+    seed: int,
+) -> None:
+    cm = confusion_matrix(y_true, y_pred, labels=[0, 1])
+    labels = [["TN", "FP"], ["FN", "TP"]]
+
+    fig, ax = plt.subplots(figsize=(6, 5))
+    im = ax.imshow(cm, cmap="Blues")
+    ax.set_title(f"Fused Confusion Matrix ({data_source})\\nbackend={backend}, seed={seed}", pad=10)
+    ax.set_xlabel("Predicted")
+    ax.set_ylabel("Actual")
+    ax.set_xticks([0, 1], ["Normal", "Anomaly"])
+    ax.set_yticks([0, 1], ["Normal", "Anomaly"])
+
+    for i in range(2):
+        for j in range(2):
+            ax.text(j, i, f"{labels[i][j]}\\n{cm[i, j]}", ha="center", va="center", color="black", fontsize=11)
+
+    fig.colorbar(im, ax=ax, fraction=0.046, pad=0.04)
+    fig.tight_layout()
+    os.makedirs(os.path.dirname(out_path), exist_ok=True)
+    fig.savefig(out_path, dpi=140)
+    plt.close(fig)
+
+
 def plot_precision_recall_curves(y_true: np.ndarray, score_dict: Dict[str, np.ndarray], out_path: str) -> Dict[str, float]:
     plt.figure(figsize=(8, 5))
     ap_scores: Dict[str, float] = {}
@@ -829,6 +859,7 @@ def run_pipeline(
     run_report_path = f"results/run_report{tag}.json"
     accuracy_plot_path = f"results/accuracy_f1_comparison{tag}.png"
     confusion_plot_path = f"results/confusion_matrices{tag}.png"
+    fused_confusion_plot_path = f"results/confusion_matrix_fused{tag}.png"
     pr_plot_path = f"results/precision_recall_curve{tag}.png"
     anomaly_breakdown_path = f"results/per_anomaly_type_breakdown{tag}.csv"
     ablation_metrics_path = f"results/ablation_metrics{tag}.csv"
@@ -874,6 +905,14 @@ def run_pipeline(
             json.dump(report, f, indent=2)
 
         plot_results(metrics_baseline, metrics_fused, accuracy_plot_path)
+        plot_fused_confusion_matrix(
+            y_test,
+            fused_pred,
+            fused_confusion_plot_path,
+            backend=backend,
+            data_source=data_source,
+            seed=seed,
+        )
     if save_artifacts and results_mode == "full":
         plot_confusion_matrices(
             y_test,
@@ -940,6 +979,7 @@ def run_pipeline(
             "metrics": metrics_path,
             "run_report": run_report_path,
             "accuracy_plot": accuracy_plot_path,
+            "fused_confusion_plot": fused_confusion_plot_path,
         }
     if save_artifacts and results_mode == "full":
         report["saved_files"]["simulation_output"] = simulation_output_path

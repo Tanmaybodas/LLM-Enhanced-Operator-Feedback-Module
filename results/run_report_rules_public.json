@@ -1,19 +1,19 @@
 {
   "backend": "rules",
   "require_real_llm": false,
-  "seed": 7,
+  "seed": 2,
   "n_total": 200,
   "n_train": 140,
   "n_test": 60,
   "baseline_threshold": 0.5,
   "llm_only_threshold": 0.5,
-  "fused_threshold": 0.2,
+  "fused_threshold": 0.7500000000000002,
   "metrics": {
     "baseline": {
-      "accuracy": 0.8833333333333333,
-      "precision": 0.0,
-      "recall": 0.0,
-      "f1": 0.0
+      "accuracy": 0.8166666666666667,
+      "precision": 0.08333333333333333,
+      "recall": 1.0,
+      "f1": 0.15384615384615385
     },
     "llm_only": {
       "accuracy": 0.016666666666666666,
@@ -23,23 +23,23 @@
     },
     "fused": {
       "accuracy": 0.9833333333333333,
-      "precision": 0.5,
-      "recall": 1.0,
-      "f1": 0.6666666666666666
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1": 0.0
     },
     "fused_with_acceptance": {
       "accuracy": 0.9333333333333333,
-      "precision": 0.2,
-      "recall": 1.0,
-      "f1": 0.3333333333333333
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1": 0.0
     }
   },
   "confusion": {
     "baseline": {
-      "tp": 0,
-      "tn": 53,
-      "fp": 6,
-      "fn": 1
+      "tp": 1,
+      "tn": 48,
+      "fp": 11,
+      "fn": 0
     },
     "llm_only": {
       "tp": 1,
@@ -48,16 +48,16 @@
       "fn": 0
     },
     "fused": {
-      "tp": 1,
-      "tn": 58,
-      "fp": 1,
-      "fn": 0
+      "tp": 0,
+      "tn": 59,
+      "fp": 0,
+      "fn": 1
     },
     "fused_with_acceptance": {
-      "tp": 1,
-      "tn": 55,
-      "fp": 4,
-      "fn": 0
+      "tp": 0,
+      "tn": 56,
+      "fp": 3,
+      "fn": 1
     }
   },
   "llm_source_counts_test": {
@@ -65,9 +65,9 @@
   },
   "operator_acceptance": {
     "confidence_threshold": 75,
-    "sampled_acceptance_probability": 0.8071224937460886,
-    "accepted_count": 26,
-    "eligible_count": 36
+    "sampled_acceptance_probability": 0.8380821159483116,
+    "accepted_count": 28,
+    "eligible_count": 32
   },
   "data_source": "public",
   "output_tag": "rules_public"

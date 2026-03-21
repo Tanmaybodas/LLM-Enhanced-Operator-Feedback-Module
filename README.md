@@ -191,7 +191,7 @@ Public-data metrics vary by seed and class balance in the selected sample.
 
 ### Public-data confusion matrix (fused model)
 
-![Public data confusion matrix](results/confusion_matrix_public_fused.png)
+![Public data confusion matrix](results/confusion_matrix_fused_rules_public.png)
 
 This image is generated from the latest public-data run report in results/run_report.json.
 
