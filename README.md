@@ -262,6 +262,28 @@ This image is generated from the latest public-data run report in results/run_re
 
 **Note:** Download may be restricted by network environment. For offline evaluation, download [AI4I 2020](https://archive.ics.uci.edu/ml/machine-learning-databases/00601/) and pass `--public-csv`.
 
+## Key Terms & Metrics
+
+Understanding the confusion matrix and performance metrics:
+
+### Confusion Matrix (TP, TN, FP, FN)
+
+|  | **Predicted Normal** | **Predicted Anomaly** |
+|---|---|---|
+| **Actually Normal** | **TN** (True Negative) — Correct pass ✓ | **FP** (False Positive) — False alarm |
+| **Actually Anomaly** | **FN** (False Negative) — Missed failure ⚠️ | **TP** (True Positive) — Correct detection ✓ |
+
+### Performance Metrics
+
+| Metric | What it measures | Formula | Why it matters |
+|--------|---|---|---|
+| **Accuracy** | Overall correctness | (TP + TN) / all | Misleading on imbalanced data |
+| **Precision** | Quality of alarms | TP / (TP + FP) | Are our anomaly flags real? |
+| **Recall** | Detection coverage | TP / (TP + FN) | **Critical**: Did we catch all anomalies? Missing failures is risky. |
+| **F1** | Balanced performance | 2 × (Precision × Recall) / (Precision + Recall) | One score balancing precision & recall |
+
+**Why Recall is Critical:** On imbalanced data (97% normal, 3% anomalies), recall is more important than accuracy. A model that misses anomalies (high FN) poses production risk, even if overall accuracy is high.
+
 ## Known limitations and future work.
 
 - Results are sensitive to random seed and anomaly prevalence; multi-seed mean plus/minus std reporting should be preferred.
