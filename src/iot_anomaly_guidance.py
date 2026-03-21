@@ -583,7 +583,7 @@ def plot_fused_confusion_matrix(
 
     fig, ax = plt.subplots(figsize=(6, 5))
     im = ax.imshow(cm, cmap="Blues")
-    ax.set_title(f"Fused Confusion Matrix ({data_source})\\nbackend={backend}, seed={seed}", pad=10)
+    ax.set_title(f"Fused Confusion Matrix ({data_source})\nbackend={backend}, seed={seed}", pad=10)
     ax.set_xlabel("Predicted")
     ax.set_ylabel("Actual")
     ax.set_xticks([0, 1], ["Normal", "Anomaly"])
@@ -591,7 +591,7 @@ def plot_fused_confusion_matrix(
 
     for i in range(2):
         for j in range(2):
-            ax.text(j, i, f"{labels[i][j]}\\n{cm[i, j]}", ha="center", va="center", color="black", fontsize=11)
+            ax.text(j, i, f"{labels[i][j]}\n{cm[i, j]}", ha="center", va="center", color="black", fontsize=11)
 
     fig.colorbar(im, ax=ax, fraction=0.046, pad=0.04)
     fig.tight_layout()
