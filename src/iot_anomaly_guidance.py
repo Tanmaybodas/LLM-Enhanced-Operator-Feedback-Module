@@ -501,19 +501,47 @@ def plot_results(metrics_baseline: Dict[str, float], metrics_fused: Dict[str, fl
     x = np.arange(len(labels))
     width = 0.35
 
-    plt.figure(figsize=(10, 5))
-    plt.bar(x - width / 2, baseline_vals, width, label="IoT Only")
-    plt.bar(x + width / 2, fused_vals, width, label="IoT + LLM Feedback")
-    plt.xticks(x, [lbl.upper() for lbl in labels])
-    plt.ylim(0, 1)
-    plt.ylabel("Score")
-    plt.title("Anomaly Detection Improvement with Operator Feedback")
-    plt.legend()
-    plt.tight_layout()
+    fig, ax = plt.subplots(figsize=(10, 5))
+    baseline_bars = ax.bar(
+        x - width / 2,
+        baseline_vals,
+        width,
+        label="IoT Only",
+        edgecolor="black",
+        linewidth=0.8,
+    )
+    fused_bars = ax.bar(
+        x + width / 2,
+        fused_vals,
+        width,
+        label="IoT + LLM Feedback",
+        edgecolor="black",
+        linewidth=0.8,
+    )
+    ax.set_xticks(x, [lbl.upper() for lbl in labels])
+    ax.set_ylim(0, 1)
+    ax.set_ylabel("Score")
+    ax.set_title("Anomaly Detection Improvement with Operator Feedback")
+    ax.grid(axis="y", alpha=0.2)
+    ax.legend()
+
+    # Keep zero-height metrics readable by labeling each bar directly.
+    for bar in list(baseline_bars) + list(fused_bars):
+        h = float(bar.get_height())
+        ax.text(
+            bar.get_x() + bar.get_width() / 2,
+            max(h, 0.01) + 0.01,
+            f"{h:.3f}",
+            ha="center",
+            va="bottom",
+            fontsize=9,
+        )
+
+    fig.tight_layout()
 
     os.makedirs(os.path.dirname(out_path), exist_ok=True)
-    plt.savefig(out_path, dpi=140)
-    plt.close()
+    fig.savefig(out_path, dpi=140)
+    plt.close(fig)
 
 
 def plot_confusion_matrices(y_true: np.ndarray, preds: Dict[str, np.ndarray], out_path: str) -> None:
