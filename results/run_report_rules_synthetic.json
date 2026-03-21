@@ -1,0 +1,74 @@
+{
+  "backend": "rules",
+  "require_real_llm": false,
+  "seed": 1,
+  "n_total": 200,
+  "n_train": 140,
+  "n_test": 60,
+  "baseline_threshold": 0.54,
+  "llm_only_threshold": 0.8,
+  "fused_threshold": 0.6500000000000001,
+  "metrics": {
+    "baseline": {
+      "accuracy": 0.8,
+      "precision": 0.8888888888888888,
+      "recall": 0.42105263157894735,
+      "f1": 0.5714285714285714
+    },
+    "llm_only": {
+      "accuracy": 0.9666666666666667,
+      "precision": 1.0,
+      "recall": 0.8947368421052632,
+      "f1": 0.9444444444444444
+    },
+    "fused": {
+      "accuracy": 0.9166666666666666,
+      "precision": 1.0,
+      "recall": 0.7368421052631579,
+      "f1": 0.8484848484848485
+    },
+    "fused_with_acceptance": {
+      "accuracy": 0.8833333333333333,
+      "precision": 0.9285714285714286,
+      "recall": 0.6842105263157895,
+      "f1": 0.7878787878787878
+    }
+  },
+  "confusion": {
+    "baseline": {
+      "tp": 8,
+      "tn": 40,
+      "fp": 1,
+      "fn": 11
+    },
+    "llm_only": {
+      "tp": 17,
+      "tn": 41,
+      "fp": 0,
+      "fn": 2
+    },
+    "fused": {
+      "tp": 14,
+      "tn": 41,
+      "fp": 0,
+      "fn": 5
+    },
+    "fused_with_acceptance": {
+      "tp": 13,
+      "tn": 40,
+      "fp": 1,
+      "fn": 6
+    }
+  },
+  "llm_source_counts_test": {
+    "rules": 60
+  },
+  "operator_acceptance": {
+    "confidence_threshold": 75,
+    "sampled_acceptance_probability": 0.8612594928569951,
+    "accepted_count": 18,
+    "eligible_count": 20
+  },
+  "data_source": "synthetic",
+  "output_tag": "rules_synthetic"
+}

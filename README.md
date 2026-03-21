@@ -73,10 +73,41 @@ Pipeline in [src/iot_anomaly_guidance.py](src/iot_anomaly_guidance.py):
 ## Output files
 
 - Metrics table (rules + public): [results/metrics_rules_public.csv](results/metrics_rules_public.csv)
+- Metrics table (rules + synthetic): [results/metrics_rules_synthetic.csv](results/metrics_rules_synthetic.csv)
 - Run report (rules + public): [results/run_report_rules_public.json](results/run_report_rules_public.json)
+- Run report (rules + synthetic): [results/run_report_rules_synthetic.json](results/run_report_rules_synthetic.json)
 - Performance chart (rules + public): [results/accuracy_f1_comparison_rules_public.png](results/accuracy_f1_comparison_rules_public.png)
+- Performance chart (rules + synthetic): [results/accuracy_f1_comparison_rules_synthetic.png](results/accuracy_f1_comparison_rules_synthetic.png)
+- Fused confusion matrix (rules + public): [results/confusion_matrix_fused_rules_public.png](results/confusion_matrix_fused_rules_public.png)
+- Fused confusion matrix (rules + synthetic): [results/confusion_matrix_fused_rules_synthetic.png](results/confusion_matrix_fused_rules_synthetic.png)
 - Backend benchmark comparison: [results/backend_comparison_synthetic.csv](results/backend_comparison_synthetic.csv)
 - Backend performance chart: [results/backend_comparison_synthetic.png](results/backend_comparison_synthetic.png)
+
+## Latest graph data (rules backend)
+
+These values match the currently saved charts and CSV files in `results/`.
+
+### Synthetic (`seed=1`, `samples=200`)
+
+| Model                    | Accuracy | Precision | Recall | F1    |
+| ------------------------ | -------: | --------: | -----: | ----: |
+| IoT Only                 |    0.800 |     0.889 |  0.421 | 0.571 |
+| LLM Only                 |    0.967 |     1.000 |  0.895 | 0.944 |
+| IoT + LLM                |    0.917 |     1.000 |  0.737 | 0.848 |
+| IoT + LLM + Acceptance   |    0.883 |     0.929 |  0.684 | 0.788 |
+
+Chart: [results/accuracy_f1_comparison_rules_synthetic.png](results/accuracy_f1_comparison_rules_synthetic.png)
+
+### Public (`seed=21`, `samples=200`)
+
+| Model                    | Accuracy | Precision | Recall | F1    |
+| ------------------------ | -------: | --------: | -----: | ----: |
+| IoT Only                 |    0.900 |     0.000 |  0.000 | 0.000 |
+| LLM Only                 |    0.033 |     0.033 |  1.000 | 0.065 |
+| IoT + LLM                |    0.800 |     0.000 |  0.000 | 0.000 |
+| IoT + LLM + Acceptance   |    0.883 |     0.000 |  0.000 | 0.000 |
+
+Chart: [results/accuracy_f1_comparison_rules_public.png](results/accuracy_f1_comparison_rules_public.png)
 
 ## Representative result (rules backend, seed=42)
 
@@ -193,7 +224,7 @@ Public-data metrics vary by seed and class balance in the selected sample.
 
 ![Public data confusion matrix](results/confusion_matrix_fused_rules_public.png)
 
-This image is generated from the latest public-data run report in results/run_report.json.
+This image is generated from the latest public-data run report in results/run_report_rules_public.json.
 
 **Note:** Download may be restricted by network environment. For offline evaluation, download [AI4I 2020](https://archive.ics.uci.edu/ml/machine-learning-databases/00601/) and pass `--public-csv`.
 
@@ -211,6 +242,6 @@ This image is generated from the latest public-data run report in results/run_re
 2. Show the terminal sections:
    - performance table
    - improvement summary
-3. Open the metrics chart: [results/accuracy_f1_comparison.png](results/accuracy_f1_comparison.png)
-4. Open metrics CSV: [results/metrics.csv](results/metrics.csv)
-5. Open technical details (if asked): [results/run_report.json](results/run_report.json)
+3. Open the metrics chart: [results/accuracy_f1_comparison_rules_public.png](results/accuracy_f1_comparison_rules_public.png)
+4. Open metrics CSV: [results/metrics_rules_public.csv](results/metrics_rules_public.csv)
+5. Open technical details (if asked): [results/run_report_rules_public.json](results/run_report_rules_public.json)
