@@ -519,9 +519,9 @@ def plot_results(metrics_baseline: Dict[str, float], metrics_fused: Dict[str, fl
         linewidth=0.8,
     )
     ax.set_xticks(x, [lbl.upper() for lbl in labels])
-    ax.set_ylim(0, 1)
+    ax.set_ylim(0, 1.08)
     ax.set_ylabel("Score")
-    ax.set_title("Anomaly Detection Improvement with Operator Feedback")
+    ax.set_title("Anomaly Detection Improvement with Operator Feedback", pad=14)
     ax.grid(axis="y", alpha=0.2)
     ax.legend()
 
@@ -530,7 +530,7 @@ def plot_results(metrics_baseline: Dict[str, float], metrics_fused: Dict[str, fl
         h = float(bar.get_height())
         ax.text(
             bar.get_x() + bar.get_width() / 2,
-            max(h, 0.01) + 0.01,
+            min(max(h, 0.01) + 0.01, 1.04),
             f"{h:.3f}",
             ha="center",
             va="bottom",
