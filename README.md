@@ -29,10 +29,9 @@ python src/iot_anomaly_guidance.py --backend rules --samples 200 --seed 42 --pre
 
 | Mode         | Command                                               | Notes                                                |
 | ------------ | ----------------------------------------------------- | ---------------------------------------------------- |
-| Auto         | `python src/iot_anomaly_guidance.py`                  | Tries Ollama, then Hugging Face, then rules fallback |
+| Auto         | `python src/iot_anomaly_guidance.py`                  | Tries Ollama, then rules fallback                    |
 | Rules        | `python src/iot_anomaly_guidance.py --backend rules`  | Fastest and dependency-light                         |
 | Ollama       | `python src/iot_anomaly_guidance.py --backend ollama` | Requires local model runtime                         |
-| Hugging Face | `python src/iot_anomaly_guidance.py --backend hf`     | Requires `transformers` + `torch`                    |
 
 Optional flags:
 
@@ -48,11 +47,7 @@ Ollama (recommended):
 ollama pull phi3:mini
 ```
 
-Hugging Face fallback:
 
-```bash
-pip install transformers torch
-```
 
 ## How it works
 

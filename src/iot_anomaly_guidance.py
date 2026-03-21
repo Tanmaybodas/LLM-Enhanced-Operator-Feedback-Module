@@ -5,6 +5,7 @@ import os
 import random
 import re
 import time
+import warnings
 from dataclasses import dataclass
 from typing import Any, Dict, List, Optional, Tuple
 
@@ -368,18 +369,7 @@ def call_ollama(prompt: str, model: str = "phi3:mini") -> Optional[Dict[str, Any
     return None
 
 
-def call_hf(prompt: str) -> Optional[Dict[str, Any]]:
-    try:
-        transformers = importlib.import_module("transformers")
-        pipeline = getattr(transformers, "pipeline")
 
-        generator = pipeline("text-generation", model="distilgpt2")
-        out = generator(prompt, max_new_tokens=80, do_sample=False, temperature=0.1)
-        generated = out[0]["generated_text"]
-        tail = generated[len(prompt) :]
-        return parse_json_from_text(tail)
-    except Exception:
-        return None
 
 
 def llm_suggestion(
@@ -388,6 +378,7 @@ def llm_suggestion(
     backend: str = "auto",
     require_real_llm: bool = False,
 ) -> LLMResult:
+    attempted_backends: List[str] = []
     logs_summary = (
         f"Temp={logs['temperature_c']}°C Vib={logs['vibration_g']}g "
         f"Pressure={logs['pressure_bar']}bar RPM={logs['rpm']}"
@@ -398,23 +389,30 @@ def llm_suggestion(
     source = "unknown"
 
     if backend in ("auto", "ollama"):
+        attempted_backends.append("ollama")
         data = call_ollama(prompt)
         if data is not None:
             source = "ollama"
         else:
             source = "none"
 
-    if data is None and backend in ("auto", "hf"):
-        data = call_hf(prompt)
-        if data is not None:
-            source = "hf"
+
 
     if data is None:
-        if require_real_llm and backend in ("ollama", "hf"):
+        if attempted_backends and backend != "rules":
+            warnings.warn(
+                f"Backend '{backend}' unavailable; falling back to rules. "
+                f"Install required dependencies or use --backend rules.",
+                UserWarning
+            )
+        if require_real_llm and backend == "ollama":
             raise RuntimeError(
                 f"Requested backend '{backend}' could not produce output. Ensure runtime/model is available."
             )
-        return rules_based_llm(logs, comment)
+        rules_result = rules_based_llm(logs, comment)
+        if attempted_backends and backend != "rules":
+            rules_result.source = f"{backend}->fallback_to_rules"
+        return rules_result
 
     root_cause = str(data.get("root_cause", "")).strip()
     action = str(data.get("action", "")).strip()
@@ -1017,8 +1015,8 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--backend",
         default="auto",
-        choices=["auto", "ollama", "hf", "rules"],
-        help="LLM backend: auto|ollama|hf|rules",
+        choices=["auto", "ollama", "rules"],
+        help="LLM backend: auto (tries ollama, then rules) | ollama (requires local model) | rules (keyword-based, fastest)",
     )
     parser.add_argument("--samples", type=int, default=200, help="Number of synthetic records (default: 200)")
     parser.add_argument("--seed", type=int, default=42, help="Random seed for reproducibility (default: 42)")
